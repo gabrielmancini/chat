@@ -18,6 +18,7 @@ package br.org.facul.chat.client;
 import static org.jboss.netty.channel.Channels.*;
 
 import javax.net.ssl.SSLEngine;
+import javax.swing.JTextPane;
 
 import org.jboss.netty.channel.ChannelPipeline;
 import org.jboss.netty.channel.ChannelPipelineFactory;
@@ -32,8 +33,14 @@ import org.jboss.netty.handler.ssl.SslHandler;
  */
 public class SecureChatClientPipelineFactory implements
         ChannelPipelineFactory {
+	
+	SecureChatClient secureChatClient;
+	
+    public SecureChatClientPipelineFactory(SecureChatClient secureChatClient) {
+    	this.secureChatClient = secureChatClient;
+	}
 
-    public ChannelPipeline getPipeline() throws Exception {
+	public ChannelPipeline getPipeline() throws Exception {
         ChannelPipeline pipeline = pipeline();
 
         // Add SSL handler first to encrypt and decrypt everything.
@@ -55,7 +62,7 @@ public class SecureChatClientPipelineFactory implements
         pipeline.addLast("encoder", new StringEncoder());
 
         // and then business logic.
-        pipeline.addLast("handler", new SecureChatClientHandler());
+        pipeline.addLast("handler", new SecureChatClientHandler(secureChatClient));
 
         return pipeline;
     }

@@ -21,6 +21,9 @@ import java.io.InputStreamReader;
 import java.net.InetSocketAddress;
 import java.util.concurrent.Executors;
 
+import javax.swing.JTextPane;
+
+import org.jboss.netty.bootstrap.Bootstrap;
 import org.jboss.netty.bootstrap.ClientBootstrap;
 import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.ChannelFuture;
@@ -33,13 +36,24 @@ public class SecureChatClient {
 
     private final String host;
     private final int port;
+    private String recivedMessage;
+	private ChannelFuture lastWriteFuture;
+	private Channel channel;
+	private Bootstrap bootstrap;
+	private JTextPane txtChat;
     
     public SecureChatClient(String host, int port) {
         this.host = host;
         this.port = port;
     }
 
-    public void run() throws IOException {
+    public SecureChatClient(String host, int port, JTextPane txtChat) {
+        this.host = host;
+        this.port = port;
+		this.txtChat = txtChat;
+	}
+
+	public void run() throws IOException {
         // Configure the client.
         ClientBootstrap bootstrap = new ClientBootstrap(
                 new NioClientSocketChannelFactory(
@@ -47,13 +61,13 @@ public class SecureChatClient {
                         Executors.newCachedThreadPool()));
 
         // Configure the pipeline factory.
-        bootstrap.setPipelineFactory(new SecureChatClientPipelineFactory());
+        bootstrap.setPipelineFactory(new SecureChatClientPipelineFactory(this));
 
         // Start the connection attempt.
         ChannelFuture future = bootstrap.connect(new InetSocketAddress(host, port));
 
         // Wait until the connection attempt succeeds or fails.
-        Channel channel = future.awaitUninterruptibly().getChannel();
+        channel = future.awaitUninterruptibly().getChannel();
         if (!future.isSuccess()) {
             future.getCause().printStackTrace();
             bootstrap.releaseExternalResources();
@@ -61,26 +75,12 @@ public class SecureChatClient {
         }
 
         // Read commands from the stdin.
-        ChannelFuture lastWriteFuture = null;
-        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
-        for (;;) {
-            String line = in.readLine();
-            if (line == null) {
-                break;
-            }
+        this.lastWriteFuture = null;
+        
+    }
 
-            // Sends the received line to the server.
-            lastWriteFuture = channel.write(line + "\r\n");
-
-            // If user typed the 'bye' command, wait until the server closes
-            // the connection.
-            if (line.toLowerCase().equals("bye")) {
-                channel.getCloseFuture().awaitUninterruptibly();
-                break;
-            }
-        }
-
-        // Wait until all messages are flushed before closing the channel.
+    public void closeConnection() {
+    	// Wait until all messages are flushed before closing the channel.
         if (lastWriteFuture != null) {
             lastWriteFuture.awaitUninterruptibly();
         }
@@ -92,6 +92,16 @@ public class SecureChatClient {
         // Shut down all thread pools to exit.
         bootstrap.releaseExternalResources();
     }
+    
+	public void sendMessage(String message) {
+		lastWriteFuture = channel.write(message + "\r\n");
+	}
+	
+	public void recivedMessage(String message) {
+		this.recivedMessage = message;
+		if (null != txtChat)
+			txtChat.setText(txtChat.getText() + "\r\n" + message);
+	}
 
     public static void main(String[] args) throws Exception {
         // Print usage if no argument is specified.

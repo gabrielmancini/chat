@@ -18,6 +18,8 @@ package br.org.facul.chat.client;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import javax.swing.JTextPane;
+
 import org.jboss.netty.channel.ChannelEvent;
 import org.jboss.netty.channel.ChannelHandlerContext;
 import org.jboss.netty.channel.ChannelStateEvent;
@@ -34,7 +36,12 @@ public class SecureChatClientHandler extends SimpleChannelUpstreamHandler {
     private static final Logger logger = Logger.getLogger(
             SecureChatClientHandler.class.getName());
 
-    @Override
+    SecureChatClient secureChatClient;
+    public SecureChatClientHandler(SecureChatClient secureChatClient) {
+		this.secureChatClient = secureChatClient; 
+	}
+
+	@Override
     public void handleUpstream(
             ChannelHandlerContext ctx, ChannelEvent e) throws Exception {
         if (e instanceof ChannelStateEvent) {
@@ -57,7 +64,7 @@ public class SecureChatClientHandler extends SimpleChannelUpstreamHandler {
     @Override
     public void messageReceived(
             ChannelHandlerContext ctx, MessageEvent e) {
-        System.err.println(e.getMessage());
+    	secureChatClient.recivedMessage(e.getMessage().toString());
     }
 
     @Override

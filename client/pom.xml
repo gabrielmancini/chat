@@ -30,7 +30,7 @@
 					</descriptorRefs>
 					<archive>
 						<manifest>
-							<mainClass>br.org.facul.chat.client.SecureChatClient</mainClass>
+							<mainClass>br.org.facul.chat.swing.Chat</mainClass>
 						</manifest>
 						<manifestEntries>
 							<mode>development</mode>
