@@ -1,5 +1,9 @@
 Manifest-Version: 1.0
 Built-By: gabriel
 Build-Jdk: 1.6.0_31
+Package: br.org.facul.chat.server
+Main-Class: br.org.facul.chat.server.SecureChatServer
 Created-By: Maven Integration for Eclipse
+mode: development
+url: 
 

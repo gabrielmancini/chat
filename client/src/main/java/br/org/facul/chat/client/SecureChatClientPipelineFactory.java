@@ -59,4 +59,5 @@ public class SecureChatClientPipelineFactory implements
 
         return pipeline;
     }
+
 }
