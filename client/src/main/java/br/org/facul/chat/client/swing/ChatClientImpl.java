@@ -1,4 +1,4 @@
-package br.org.facul.chat.swing;
+package br.org.facul.chat.client.swing;
 
 import java.awt.EventQueue;
 
@@ -12,22 +12,34 @@ import javax.swing.JScrollBar;
 import javax.swing.JLabel;
 import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
+import java.net.Socket;
+import java.net.UnknownHostException;
 
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 
-import br.org.facul.chat.client.SecureChatClient;
+import br.org.facul.chat.client.netty.SecureChatClient;
+import br.org.facul.chat.client.socket.ChatClient;
+import br.org.facul.chat.client.socket.ChatClientThread;
 
-public class Chat {
+public class ChatClientImpl implements ChatClient {
 
+	
+	private Socket socket = null;
+	private DataInputStream console = null;
+	private DataOutputStream streamOut = null;
+	private ChatClientThread client = null;
+	
 	private JFrame frmClient;
 	private JTextField message;
 	private JButton btnSend;
 	private JTextField server;
 	private JTextField nick;
 	private JButton btnConnect;
-	private SecureChatClient client;
+
 	private final Action envia = new SwingAction(this);
 	private JTextPane txtChat;
 	private final Action conecta = new SwingAction_1(this);
@@ -39,7 +51,7 @@ public class Chat {
 		EventQueue.invokeLater(new Runnable() {
 			public void run() {
 				try {
-					Chat window = new Chat();
+					ChatClientImpl window = new ChatClientImpl();
 					window.frmClient.setVisible(true);
 				} catch (Exception e) {
 					e.printStackTrace();
@@ -51,7 +63,7 @@ public class Chat {
 	/**
 	 * Create the application.
 	 */
-	public Chat() {
+	public ChatClientImpl() {
 		initialize();
 	}
 
@@ -111,39 +123,111 @@ public class Chat {
 		frmClient.getContentPane().add(lblNick);
 
 	}
+	
+	
+	public void connect(String serverName, int serverPort) {
+		println("Establishing connection. Please wait ...");
+		try {
+			socket = new Socket(serverName, serverPort);
+			println("Connected: " + socket);
+			open();
+			btnSend.enable();
+			btnConnect.disable();
+
+		} catch (UnknownHostException uhe) {
+			println("Host unknown: " + uhe.getMessage());
+		} catch (IOException ioe) {
+			println("Unexpected exception: " + ioe.getMessage());
+		}
+	}
+
+	private void send() {
+		try {
+			streamOut.writeUTF(message.getText());
+			streamOut.flush();
+			message.setText("");
+		} catch (IOException ioe) {
+			println("Sending error: " + ioe.getMessage());
+			close();
+		}
+	}
+
+	public void handle(String msg) {
+		if (msg.equals(".bye")) {
+			println("Good bye. Press RETURN to exit ...");
+			close();
+		} else
+			println(msg);
+	}
+
+	public void open() {
+		try {
+			streamOut = new DataOutputStream(socket.getOutputStream());
+			client = new ChatClientThread(this, socket);
+		} catch (IOException ioe) {
+			println("Error opening output stream: " + ioe);
+		}
+	}
+
+	public void close() {
+		try {
+			if (streamOut != null)
+				streamOut.close();
+			if (socket != null)
+				socket.close();
+		} catch (IOException ioe) {
+			println("Error closing ...");
+		}
+		client.close();
+		client.stop();
+	}
+
+	private void println(String msg) {
+		txtChat.setText(txtChat.getText() + msg + "\n");
+	}
+
+	
 	private class SwingAction extends AbstractAction {
 		
 		String messsage;
-		Chat chat;
+		ChatClientImpl chat;
 
-		public SwingAction(Chat chat) {
+		public SwingAction(ChatClientImpl chat) {
 			putValue(NAME, "Envia");
 			putValue(SHORT_DESCRIPTION, "Some short description");
 			this.chat = chat;
 		}
 		public void actionPerformed(ActionEvent e) {
-			chat.client.sendMessage(chat.message.getText());
-			chat.message.setText("");
+			chat.send();
 		}
 	}
 	private class SwingAction_1 extends AbstractAction {
-		Chat chat;
+		ChatClientImpl chat;
 
-		public SwingAction_1(Chat chat) {
+		public SwingAction_1(ChatClientImpl chat) {
 			putValue(NAME, "Conecta");
 			putValue(SHORT_DESCRIPTION, "Some short description");
 			this.chat = chat;
 		}
 		
 		public void actionPerformed(ActionEvent e) {
-			try {
-				this.chat.client = new SecureChatClient(chat.server.getText(), 8443, chat.txtChat);
-				this.chat.client.run();
-				
-			} catch (IOException e1) {
-				// TODO Auto-generated catch block
-				e1.printStackTrace();
-			}
+			chat.connect(server.getText(), 7000);
 		}
+	}
+	
+	public void stop() {
+		
+		try {
+			if (console != null)
+				console.close();
+			if (streamOut != null)
+				streamOut.close();
+			if (socket != null)
+				socket.close();
+		} catch (IOException ioe) {
+			System.out.println("Error closing ...");
+		}
+		client.close();
+		client.stop();
 	}
 }

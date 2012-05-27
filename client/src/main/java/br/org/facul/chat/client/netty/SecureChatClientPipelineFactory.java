@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations
  * under the License.
  */
-package br.org.facul.chat.client;
+package br.org.facul.chat.client.netty;
 
 import static org.jboss.netty.channel.Channels.*;
 
@@ -27,6 +27,8 @@ import org.jboss.netty.handler.codec.frame.Delimiters;
 import org.jboss.netty.handler.codec.string.StringDecoder;
 import org.jboss.netty.handler.codec.string.StringEncoder;
 import org.jboss.netty.handler.ssl.SslHandler;
+
+import br.org.facul.chat.client.SecureChatSslContextFactory;
 
 /**
  * Creates a newly configured {@link ChannelPipeline} for a new channel.
