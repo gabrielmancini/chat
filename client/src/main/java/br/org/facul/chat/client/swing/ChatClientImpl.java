@@ -21,6 +21,8 @@ import br.org.facul.chat.client.socket.ChatClient;
 import br.org.facul.chat.client.socket.ChatClientThread;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 
 public class ChatClientImpl implements ChatClient {
 
@@ -77,6 +79,14 @@ public class ChatClientImpl implements ChatClient {
 		frmClient.getContentPane().setLayout(null);
 		
 		txtMessage = new JTextField();
+		txtMessage.addKeyListener(new KeyAdapter() {
+			@Override
+			public void keyTyped(KeyEvent arg0) {
+				if (arg0.getKeyCode() == 13) {
+					// implementa a action
+				}
+			}
+		});
 		txtMessage.setBounds(79, 342, 417, 29);
 		frmClient.getContentPane().add(txtMessage);
 		txtMessage.setColumns(10);

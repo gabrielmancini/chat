@@ -25,7 +25,7 @@
 					</descriptorRefs>
 					<archive>
 						<manifest>
-							<mainClass>br.org.facul.chat.swing.Chat</mainClass>
+							<mainClass>br.org.facul.chat.client.swing.ChatClientImpl</mainClass>
 						</manifest>
 						<manifestEntries>
 							<mode>development</mode>

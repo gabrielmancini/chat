@@ -16,7 +16,7 @@
 					</descriptorRefs>
 					<archive>
 						<manifest>
-							<mainClass>br.org.facul.chat.server.SecureChatServer</mainClass>
+							<mainClass>br.org.facul.chat.server.socket.ChatServer</mainClass>
 						</manifest>
 						<manifestEntries>
 							<mode>development</mode>
