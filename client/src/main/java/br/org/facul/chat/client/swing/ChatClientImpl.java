@@ -2,6 +2,10 @@ package br.org.facul.chat.client.swing;
 
 import java.awt.EventQueue;
 import java.awt.event.ActionEvent;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -19,10 +23,6 @@ import javax.swing.JTextPane;
 
 import br.org.facul.chat.client.socket.ChatClient;
 import br.org.facul.chat.client.socket.ChatClientThread;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
 
 public class ChatClientImpl implements ChatClient {
 
@@ -36,14 +36,14 @@ public class ChatClientImpl implements ChatClient {
 	private JTextField txtMessage;
 	private JTextField txtHost;
 	private JTextField txtNick;
+	private JTextField txtPorta;
 	private JTextPane txtChat;
+	private JScrollBar scrollBar;
 	private JButton btnConnect;
 	private JButton btnSend;
 
-	private final Action fecha = new AFecha(this);
 	private final Action envia = new AEnvia(this);
 	private final Action conecta = new AConecta(this);
-	private JTextField txtPorta;
 
 	/**
 	 * Inicia a aplicação
@@ -73,6 +73,12 @@ public class ChatClientImpl implements ChatClient {
 	 */
 	private void initialize() {
 		frmClient = new JFrame();
+		frmClient.addWindowListener(new WindowAdapter() {
+			@Override
+			public void windowClosed(WindowEvent arg0) {
+				parar();
+			}
+		});
 		frmClient.setTitle("client");
 		frmClient.setBounds(100, 100, 600, 400);
 		frmClient.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -81,9 +87,9 @@ public class ChatClientImpl implements ChatClient {
 		txtMessage = new JTextField();
 		txtMessage.addKeyListener(new KeyAdapter() {
 			@Override
-			public void keyTyped(KeyEvent arg0) {
-				if (arg0.getKeyCode() == 13) {
-					// implementa a action
+			public void keyPressed(KeyEvent arg0) {
+				if (arg0.getKeyCode() == KeyEvent.VK_ENTER) {
+					enviar();
 				}
 			}
 		});
@@ -115,8 +121,10 @@ public class ChatClientImpl implements ChatClient {
 		txtChat.setBounds(6, 43, 574, 298);
 		frmClient.getContentPane().add(txtChat);
 		
-		JScrollBar scrollBar = new JScrollBar();
+		scrollBar = new JScrollBar();
 		scrollBar.setBounds(579, 43, 15, 298);
+		
+		
 		frmClient.getContentPane().add(scrollBar);
 		
 		JLabel lblNewLabel = new JLabel("Mensagem");
@@ -204,20 +212,6 @@ public class ChatClientImpl implements ChatClient {
 		txtChat.setText(txtChat.getText() + msg + "\n");
 	}
 
-
-	@SuppressWarnings("serial")
-	private class AFecha extends AbstractAction {
-		
-		ChatClientImpl chat;
-
-		public AFecha(ChatClientImpl chat) {
-			this.chat = chat;
-		}
-		public void actionPerformed(ActionEvent e) {
-			chat.parar();
-			chat.fechar();
-		}
-	}
 	
 	@SuppressWarnings("serial")
 	private class AEnvia extends AbstractAction {
