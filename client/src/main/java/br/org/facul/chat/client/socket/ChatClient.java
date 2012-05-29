@@ -2,8 +2,8 @@ package br.org.facul.chat.client.socket;
 
 public interface ChatClient {
 
-	void stop();
+	void parar();
 
-	void handle(String readUTF);
+	void receber(String readUTF);
 
 }

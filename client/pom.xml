@@ -4,11 +4,6 @@
 	<artifactId>client</artifactId>
 	<name>chatClient</name>
 	<dependencies>
-		<dependency>
-			<groupId>br.org.facul.chat</groupId>
-			<artifactId>utils</artifactId>
-			<version>0.0.1-SNAPSHOT</version>
-		</dependency>
 
 		<dependency>
 			<groupId>net.java.dev.swing-layout</groupId>

@@ -5,94 +5,98 @@ import java.net.ServerSocket;
 import java.net.Socket;
 
 public class ChatServer implements Runnable {
-	private ChatServerThread clients[] = new ChatServerThread[50];
+	
+	private ChatServerThread clients[] = new ChatServerThread[10];
 	private ServerSocket server = null;
 	private Thread thread = null;
 	private int clientCount = 0;
 
-	public ChatServer(int port) {
+	public ChatServer(int porta) {
 		try {
 			System.out
-					.println("Binding to port " + port + ", please wait  ...");
-			server = new ServerSocket(port);
-			System.out.println("Server started: " + server);
-			start();
+					.println("Alocando a porta para a comunicação " + porta + ", aguarde  ...");
+			server = new ServerSocket(porta);
+			System.out.println("Servidor Iniciado: " + server);
+			iniciar();
 		} catch (IOException ioe) {
-			System.out.println("Can not bind to port " + port + ": "
+			System.out.println("Não foi possivel alocar a porta " + porta + ": "
 					+ ioe.getMessage());
 		}
 	}
 
+	/***
+	 * Implementa o run do runnable
+	 */
 	public void run() {
 		while (thread != null) {
 			try {
-				System.out.println("Waiting for a client ...");
-				addThread(server.accept());
+				System.out.println("Aguardando um cliente ...");
+				adicionarThread(server.accept());
 			} catch (IOException ioe) {
-				System.out.println("Server accept error: " + ioe);
-				stop();
+				System.out.println("Erro ao aceitar um cliente: " + ioe);
+				parar();
 			}
 		}
 	}
 
-	private int findClient(int ID) {
+	private int buscarCliente(int ID) {
 		for (int i = 0; i < clientCount; i++)
 			if (clients[i].getID() == ID)
 				return i;
 		return -1;
 	}
 
-	public synchronized void handle(int ID, String input) {
-		if (input.equals(".bye")) {
-			clients[findClient(ID)].send(".bye");
-			remove(ID);
+	public synchronized void receber(int ID, String msg) {
+		if (msg.equals(".sair")) {
+			clients[buscarCliente(ID)].enviar(".sair");
+			remover(ID);
 		} else
 			for (int i = 0; i < clientCount; i++)
-				clients[i].send(ID + ": " + input);
+				clients[i].enviar(msg);
 	}
 
-	public synchronized void remove(int ID) {
-		int pos = findClient(ID);
+	public synchronized void remover(int ID) {
+		int pos = buscarCliente(ID);
 		if (pos >= 0) {
 			ChatServerThread toTerminate = clients[pos];
-			System.out.println("Removing client thread " + ID + " at " + pos);
+			System.out.println("Removendo cliente [" + ID + "] na posição " + pos);
 			if (pos < clientCount - 1)
 				for (int i = pos + 1; i < clientCount; i++)
 					clients[i - 1] = clients[i];
 			clientCount--;
 			try {
-				toTerminate.close();
+				toTerminate.fechar();
 			} catch (IOException ioe) {
-				System.out.println("Error closing thread: " + ioe);
+				System.out.println("Error ao fechar a thred: " + ioe);
 			}
 			toTerminate.stop();
 		}
 	}
 
-	private void addThread(Socket socket) {
+	private void adicionarThread(Socket socket) {
 		if (clientCount < clients.length) {
-			System.out.println("Client accepted: " + socket);
+			System.out.println("Cliente aceito: " + socket);
 			clients[clientCount] = new ChatServerThread(this, socket);
 			try {
-				clients[clientCount].open();
+				clients[clientCount].abrir();
 				clients[clientCount].start();
 				clientCount++;
 			} catch (IOException ioe) {
-				System.out.println("Error opening thread: " + ioe);
+				System.out.println("Erro ao criar a thred: " + ioe);
 			}
 		} else
-			System.out.println("Client refused: maximum " + clients.length
-					+ " reached.");
+			System.out.println("Cliente recusado: maximo " + clients.length
+					+ " atingido.");
 	}
 
-	public void start() {
+	public void iniciar() {
 		if (thread == null) {
 			thread = new Thread(this);
 			thread.start();
 		}
 	}
 
-	public void stop() {
+	public void parar() {
 		if (thread != null) {
 			thread.stop();
 			thread = null;
@@ -102,7 +106,7 @@ public class ChatServer implements Runnable {
 	public static void main(String args[]) {
 		ChatServer server = null;
 		if (args.length != 1)
-			System.out.println("Usage: java ChatServer port");
+			System.out.println("ERRO: Informe a porta de comunicação");
 		else
 			server = new ChatServer(Integer.parseInt(args[0]));
 	}

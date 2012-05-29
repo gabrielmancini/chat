@@ -12,20 +12,20 @@ public class ChatClientThread extends Thread {
 	public ChatClientThread(ChatClient _client, Socket _socket) {
 		client = _client;
 		socket = _socket;
-		open();
-		start();
+		abrir();
+		start(); //Inicia a thred
 	}
 
-	public void open() {
+	public void abrir() {
 		try {
 			streamIn = new DataInputStream(socket.getInputStream());
 		} catch (IOException ioe) {
 			System.out.println("Error getting input stream: " + ioe);
-			client.stop();
+			client.parar();
 		}
 	}
 
-	public void close() {
+	public void fechar() {
 		try {
 			if (streamIn != null)
 				streamIn.close();
@@ -34,13 +34,16 @@ public class ChatClientThread extends Thread {
 		}
 	}
 
+	/***
+	 * Implemetação do metodo run da thred
+	 */
 	public void run() {
 		while (true) {
 			try {
-				client.handle(streamIn.readUTF());
+				client.receber(streamIn.readUTF());
 			} catch (IOException ioe) {
 				System.out.println("Listening error: " + ioe.getMessage());
-				client.stop();
+				client.parar();
 			}
 		}
 	}

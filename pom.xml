@@ -7,13 +7,6 @@
 	<name>chat</name>
 	<packaging>pom</packaging>
 
-	<dependencies>
-		<dependency>
-			<groupId>io.netty</groupId>
-			<artifactId>netty</artifactId>
-			<version>3.3.1.Final</version>
-		</dependency>
-	</dependencies>
 
 	<build>
 		<plugins>
@@ -30,7 +23,7 @@
 	<modules>
 		<module>server</module>
 		<module>client</module>
-		<module>utils</module>
+		
 	</modules>
 
 </project>

@@ -1,16 +1,6 @@
 package br.org.facul.chat.client.swing;
 
 import java.awt.EventQueue;
-
-import javax.swing.JFrame;
-import javax.swing.JTextField;
-import java.awt.BorderLayout;
-import javax.swing.JButton;
-import javax.swing.JSplitPane;
-import javax.swing.JTextPane;
-import javax.swing.JScrollBar;
-import javax.swing.JLabel;
-import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -20,10 +10,17 @@ import java.net.UnknownHostException;
 
 import javax.swing.AbstractAction;
 import javax.swing.Action;
+import javax.swing.JButton;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JScrollBar;
+import javax.swing.JTextField;
+import javax.swing.JTextPane;
 
-import br.org.facul.chat.client.netty.SecureChatClient;
 import br.org.facul.chat.client.socket.ChatClient;
 import br.org.facul.chat.client.socket.ChatClientThread;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 
 public class ChatClientImpl implements ChatClient {
 
@@ -34,18 +31,20 @@ public class ChatClientImpl implements ChatClient {
 	private ChatClientThread client = null;
 	
 	private JFrame frmClient;
-	private JTextField message;
-	private JButton btnSend;
-	private JTextField server;
-	private JTextField nick;
-	private JButton btnConnect;
-
-	private final Action envia = new SwingAction(this);
+	private JTextField txtMessage;
+	private JTextField txtHost;
+	private JTextField txtNick;
 	private JTextPane txtChat;
-	private final Action conecta = new SwingAction_1(this);
+	private JButton btnConnect;
+	private JButton btnSend;
+
+	private final Action fecha = new AFecha(this);
+	private final Action envia = new AEnvia(this);
+	private final Action conecta = new AConecta(this);
+	private JTextField txtPorta;
 
 	/**
-	 * Launch the application.
+	 * Inicia a aplicação
 	 */
 	public static void main(String[] args) {
 		EventQueue.invokeLater(new Runnable() {
@@ -61,57 +60,57 @@ public class ChatClientImpl implements ChatClient {
 	}
 
 	/**
-	 * Create the application.
+	 * Cria a Aplicação
 	 */
 	public ChatClientImpl() {
 		initialize();
 	}
 
 	/**
-	 * Initialize the contents of the frame.
+	 * Inicializa os valores da janela swing
 	 */
 	private void initialize() {
 		frmClient = new JFrame();
 		frmClient.setTitle("client");
-		frmClient.setBounds(100, 100, 450, 300);
+		frmClient.setBounds(100, 100, 600, 400);
 		frmClient.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frmClient.getContentPane().setLayout(null);
 		
-		message = new JTextField();
-		message.setBounds(79, 243, 267, 29);
-		frmClient.getContentPane().add(message);
-		message.setColumns(10);
+		txtMessage = new JTextField();
+		txtMessage.setBounds(79, 342, 417, 29);
+		frmClient.getContentPane().add(txtMessage);
+		txtMessage.setColumns(10);
 		
 		btnConnect = new JButton("conecta");
 		btnConnect.setAction(conecta);
-		btnConnect.setBounds(347, 9, 97, 29);
+		btnConnect.setBounds(497, 9, 97, 29);
 		frmClient.getContentPane().add(btnConnect);
 		
-		nick = new JTextField();
-		nick.setBounds(212, 6, 134, 33);
-		frmClient.getContentPane().add(nick);
-		nick.setColumns(10);
+		txtNick = new JTextField();
+		txtNick.setBounds(362, 6, 134, 33);
+		frmClient.getContentPane().add(txtNick);
+		txtNick.setColumns(10);
 		
-		server = new JTextField();
-		server.setBounds(75, 6, 78, 33);
-		frmClient.getContentPane().add(server);
-		server.setColumns(10);
+		txtHost = new JTextField();
+		txtHost.setBounds(75, 6, 78, 33);
+		frmClient.getContentPane().add(txtHost);
+		txtHost.setColumns(10);
 		
 		btnSend = new JButton("Envia");
 		btnSend.setAction(envia);
-		btnSend.setBounds(347, 244, 97, 29);
+		btnSend.setBounds(497, 343, 97, 29);
 		frmClient.getContentPane().add(btnSend);
 		
 		txtChat = new JTextPane();
-		txtChat.setBounds(6, 43, 422, 188);
+		txtChat.setBounds(6, 43, 574, 298);
 		frmClient.getContentPane().add(txtChat);
 		
 		JScrollBar scrollBar = new JScrollBar();
-		scrollBar.setBounds(429, 43, 15, 189);
+		scrollBar.setBounds(579, 43, 15, 298);
 		frmClient.getContentPane().add(scrollBar);
 		
 		JLabel lblNewLabel = new JLabel("Mensagem");
-		lblNewLabel.setBounds(6, 249, 73, 16);
+		lblNewLabel.setBounds(6, 348, 73, 16);
 		frmClient.getContentPane().add(lblNewLabel);
 		
 		JLabel lblServidor = new JLabel("Servidor");
@@ -119,66 +118,75 @@ public class ChatClientImpl implements ChatClient {
 		frmClient.getContentPane().add(lblServidor);
 		
 		JLabel lblNick = new JLabel("Nick");
-		lblNick.setBounds(178, 14, 37, 16);
+		lblNick.setBounds(328, 14, 37, 16);
 		frmClient.getContentPane().add(lblNick);
+		
+		JLabel lblPorta = new JLabel("Porta");
+		lblPorta.setBounds(186, 14, 37, 16);
+		frmClient.getContentPane().add(lblPorta);
+		
+		txtPorta = new JTextField();
+		txtPorta.setBounds(231, 8, 85, 28);
+		frmClient.getContentPane().add(txtPorta);
+		txtPorta.setColumns(10);
 
 	}
 	
 	
-	public void connect(String serverName, int serverPort) {
-		println("Establishing connection. Please wait ...");
+	public void conectar(String host, int porta) {
+		println("Estabelecendo conexão");
 		try {
-			socket = new Socket(serverName, serverPort);
-			println("Connected: " + socket);
-			open();
+			socket = new Socket(host, porta);
+			println("Conectado: " + socket);
+			abrir();
 			btnSend.enable();
 			btnConnect.disable();
 
 		} catch (UnknownHostException uhe) {
-			println("Host unknown: " + uhe.getMessage());
+			println("Host desconhecido: " + uhe.getMessage());
 		} catch (IOException ioe) {
-			println("Unexpected exception: " + ioe.getMessage());
+			println("Exception desconhecida: " + ioe.getMessage());
 		}
 	}
 
-	private void send() {
+	private void enviar() {
 		try {
-			streamOut.writeUTF(message.getText());
+			streamOut.writeUTF("[" + txtNick.getText() + "]" + txtMessage.getText());
 			streamOut.flush();
-			message.setText("");
+			txtMessage.setText("");
 		} catch (IOException ioe) {
-			println("Sending error: " + ioe.getMessage());
-			close();
+			println("Erro no envio da mensagem: " + ioe.getMessage());
+			fechar();
 		}
 	}
 
-	public void handle(String msg) {
-		if (msg.equals(".bye")) {
-			println("Good bye. Press RETURN to exit ...");
-			close();
+	public void receber(String msg) {
+		if (msg.equals(".sair")) {
+			println("Saindo do chat ...");
+			fechar();
 		} else
 			println(msg);
 	}
 
-	public void open() {
+	public void abrir() {
 		try {
 			streamOut = new DataOutputStream(socket.getOutputStream());
 			client = new ChatClientThread(this, socket);
 		} catch (IOException ioe) {
-			println("Error opening output stream: " + ioe);
+			println("Erro ao abrir canal de comunicação: " + ioe);
 		}
 	}
 
-	public void close() {
+	public void fechar() {
 		try {
 			if (streamOut != null)
 				streamOut.close();
 			if (socket != null)
 				socket.close();
 		} catch (IOException ioe) {
-			println("Error closing ...");
+			println("Erro ao sair ...");
 		}
-		client.close();
+		client.fechar();
 		client.stop();
 	}
 
@@ -186,36 +194,49 @@ public class ChatClientImpl implements ChatClient {
 		txtChat.setText(txtChat.getText() + msg + "\n");
 	}
 
-	
-	private class SwingAction extends AbstractAction {
+
+	@SuppressWarnings("serial")
+	private class AFecha extends AbstractAction {
 		
-		String messsage;
 		ChatClientImpl chat;
 
-		public SwingAction(ChatClientImpl chat) {
+		public AFecha(ChatClientImpl chat) {
+			this.chat = chat;
+		}
+		public void actionPerformed(ActionEvent e) {
+			chat.parar();
+			chat.fechar();
+		}
+	}
+	
+	@SuppressWarnings("serial")
+	private class AEnvia extends AbstractAction {
+		
+		ChatClientImpl chat;
+
+		public AEnvia(ChatClientImpl chat) {
 			putValue(NAME, "Envia");
-			putValue(SHORT_DESCRIPTION, "Some short description");
 			this.chat = chat;
 		}
 		public void actionPerformed(ActionEvent e) {
-			chat.send();
+			chat.enviar();
 		}
 	}
-	private class SwingAction_1 extends AbstractAction {
+	@SuppressWarnings("serial")
+	private class AConecta extends AbstractAction {
 		ChatClientImpl chat;
 
-		public SwingAction_1(ChatClientImpl chat) {
+		public AConecta(ChatClientImpl chat) {
 			putValue(NAME, "Conecta");
-			putValue(SHORT_DESCRIPTION, "Some short description");
 			this.chat = chat;
 		}
 		
 		public void actionPerformed(ActionEvent e) {
-			chat.connect(server.getText(), 7000);
+			chat.conectar(txtHost.getText(), Integer.parseInt(txtPorta.getText()));
 		}
 	}
 	
-	public void stop() {
+	public void parar() {
 		
 		try {
 			if (console != null)
@@ -225,9 +246,9 @@ public class ChatClientImpl implements ChatClient {
 			if (socket != null)
 				socket.close();
 		} catch (IOException ioe) {
-			System.out.println("Error closing ...");
+			System.out.println("Erro ao parar a comunicação ...");
 		}
-		client.close();
+		client.fechar();
 		client.stop();
 	}
 }

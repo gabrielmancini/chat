@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.net.Socket;
 
 public class ChatServerThread extends Thread {
+	
 	private ChatServer server = null;
 	private Socket socket = null;
 	private int ID = -1;
@@ -21,13 +22,13 @@ public class ChatServerThread extends Thread {
 		ID = socket.getPort();
 	}
 
-	public void send(String msg) {
+	public void enviar(String msg) {
 		try {
 			streamOut.writeUTF(msg);
 			streamOut.flush();
 		} catch (IOException ioe) {
-			System.out.println(ID + " ERROR sending: " + ioe.getMessage());
-			server.remove(ID);
+			System.out.println(ID + " Erro ao Enviar: " + ioe.getMessage());
+			server.remover(ID);
 			stop();
 		}
 	}
@@ -36,27 +37,30 @@ public class ChatServerThread extends Thread {
 		return ID;
 	}
 
+	/***
+	 * implementa o run da thred
+	 */
 	public void run() {
-		System.out.println("Server Thread " + ID + " running.");
+		System.out.println("Iniciando thred " + ID);
 		while (true) {
 			try {
-				server.handle(ID, streamIn.readUTF());
+				server.receber(ID, streamIn.readUTF());
 			} catch (IOException ioe) {
 				System.out.println(ID + " ERROR reading: " + ioe.getMessage());
-				server.remove(ID);
+				server.remover(ID);
 				stop();
 			}
 		}
 	}
 
-	public void open() throws IOException {
+	public void abrir() throws IOException {
 		streamIn = new DataInputStream(new BufferedInputStream(
 				socket.getInputStream()));
 		streamOut = new DataOutputStream(new BufferedOutputStream(
 				socket.getOutputStream()));
 	}
 
-	public void close() throws IOException {
+	public void fechar() throws IOException {
 		if (socket != null)
 			socket.close();
 		if (streamIn != null)
